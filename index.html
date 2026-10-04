@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>En liten fråga ❤️</title>
+<style>
+*{box-sizing:border-box}
+body{
+  margin:0; min-height:100vh; display:flex; align-items:center; justify-content:center;
+  font-family: -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  background:linear-gradient(135deg,#fff7f5,#f9e5e2);
+  color:#342a2a; padding:24px;
+}
+.card{
+  width:min(560px,100%); background:#fff; border-radius:28px; padding:34px 28px;
+  box-shadow:0 18px 60px rgba(80,40,40,.12); text-align:center;
+}
+.heart{font-size:42px;margin-bottom:8px}
+h1{font-size:30px;margin:0 0 10px}
+.subtitle{color:#806f6f;margin:0 0 28px}
+.step{display:none}
+.step.active{display:block}
+h2{font-size:22px;margin:0 0 22px}
+.buttons{display:flex;gap:12px;justify-content:center;flex-wrap:wrap}
+button{
+  border:0;border-radius:14px;padding:14px 24px;font-size:16px;cursor:pointer;
+  transition:.2s transform,.2s box-shadow;
+}
+button:hover{transform:translateY(-2px)}
+.primary{background:#9d5960;color:white;box-shadow:0 7px 18px rgba(157,89,96,.25)}
+.no{background:#eee;color:#777;position:relative}
+.calendar{
+  display:grid;grid-template-columns:repeat(7,1fr);gap:6px;margin-top:12px;
+}
+.dayname{font-size:12px;color:#9a8c8c;font-weight:600;padding:5px}
+.date{
+  padding:10px 4px;border-radius:10px;background:#faf5f4;border:1px solid #eee;
+  cursor:pointer;font-size:14px;
+}
+.date:hover{background:#f5e5e3}
+.date.selected{background:#9d5960;color:white;border-color:#9d5960}
+.date.empty{background:transparent;border:0;cursor:default}
+.choices{display:grid;gap:10px;text-align:left}
+.choice{
+  display:flex;align-items:center;gap:12px;padding:14px 15px;border:1px solid #eadfdd;
+  border-radius:14px;cursor:pointer;background:#fff;
+}
+.choice:has(input:checked){border-color:#9d5960;background:#fff5f4}
+.choice input{accent-color:#9d5960;width:18px;height:18px}
+.nav{display:flex;justify-content:space-between;margin-top:26px;gap:10px}
+.back{background:#f1eceb;color:#5f5555}
+.error{color:#b24f59;font-size:14px;min-height:20px;margin-top:10px}
+.success{font-size:24px;line-height:1.5}
+.summary{background:#faf5f4;border-radius:16px;padding:16px;margin:20px 0;text-align:left}
+.small{font-size:13px;color:#8d7d7d}
+</style>
+</head>
+<body>
+<div class="card">
+  <div class="heart">❤️</div>
+  <h1>En liten fråga...</h1>
+  <p class="subtitle">Jag har något viktigt att fråga dig.</p>
+
+  <section class="step active" id="step1">
+    <h2>Vill du gå på dejt med mig?</h2>
+    <div class="buttons">
+      <button class="primary" onclick="nextStep()">Ja ❤️</button>
+      <button class="no" id="noBtn">Nej</button>
+    </div>
+    <div class="error" id="noMessage"></div>
+  </section>
+
+  <section class="step" id="step2">
+    <h2>När passar det för dig?</h2>
+    <p class="small">Välj ett datum i oktober 2026.</p>
+    <div class="calendar" id="calendar"></div>
+    <div class="error" id="dateError"></div>
+    <div class="nav">
+      <button class="back" onclick="showStep(1)">Tillbaka</button>
+      <button class="primary" onclick="goDate()">Nästa ❤️</button>
+    </div>
+  </section>
+
+  <section class="step" id="step3">
+    <h2>Vad vill du göra?</h2>
+    <div class="choices">
+      <label class="choice"><input type="radio" name="activity" value="Äta på restaurang">🍝 <span>Äta på restaurang</span></label>
+      <label class="choice"><input type="radio" name="activity" value="Gå på bio">🎬 <span>Gå på bio</span></label>
+      <label class="choice"><input type="radio" name="activity" value="Beställa hämtmat">🍕 <span>Beställa hämtmat</span></label>
+      <label class="choice"><input type="radio" name="activity" value="Spela brädspel">🎲 <span>Spela brädspel</span></label>
+      <label class="choice"><input type="radio" name="activity" value="Ta ett glas på en bar">🍸 <span>Ta ett glas på en bar</span></label>
+    </div>
+    <div class="error" id="activityError"></div>
+    <div class="nav">
+      <button class="back" onclick="showStep(2)">Tillbaka</button>
+      <button class="primary" onclick="submitForm()">Skicka ❤️</button>
+    </div>
+  </section>
+
+  <section class="step" id="success">
+    <div class="success">
+      <div style="font-size:55px">🥰</div>
+      <h2>Dejten är bokad!</h2>
+      <div class="summary" id="summary"></div>
+      <p>Jag ser fram emot det ❤️</p>
+    </div>
+  </section>
+</div>
+
+<script>
+let selectedDate = null;
+const month = 9; // October, zero-indexed
+const year = 2026;
+const monthNames = ["januari","februari","mars","april","maj","juni","juli","augusti","september","oktober","november","december"];
+const dayNames = ["Mån","Tis","Ons","Tor","Fre","Lör","Sön"];
+
+function showStep(n){
+  document.querySelectorAll('.step').forEach(s=>s.classList.remove('active'));
+  document.getElementById(n === 4 ? 'success' : 'step'+n).classList.add('active');
+}
+function nextStep(){ showStep(2); }
+
+function buildCalendar(){
+  const cal=document.getElementById('calendar');
+  dayNames.forEach(d=>{const el=document.createElement('div');el.className='dayname';el.textContent=d;cal.appendChild(el);});
+  const first=new Date(year,month,1);
+  let start=(first.getDay()+6)%7;
+  for(let i=0;i<start;i++){const e=document.createElement('div');e.className='date empty';cal.appendChild(e);}
+  for(let d=1;d<=31;d++){
+    const e=document.createElement('button'); e.type='button'; e.className='date'; e.textContent=d;
+    e.onclick=()=>selectDate(d,e); cal.appendChild(e);
+  }
+}
+function selectDate(d,el){
+  selectedDate=d;
+  document.querySelectorAll('.date').forEach(x=>x.classList.remove('selected'));
+  el.classList.add('selected');
+  document.getElementById('dateError').textContent='';
+}
+function goDate(){
+  if(!selectedDate){document.getElementById('dateError').textContent='Välj ett datum först ❤️';return;}
+  showStep(3);
+}
+function submitForm(){
+  const selected=document.querySelector('input[name="activity"]:checked');
+  if(!selected){document.getElementById('activityError').textContent='Välj vad du vill göra ❤️';return;}
+  const dateText=`${selectedDate} ${monthNames[month]} 2026`;
+  const form=document.createElement('form');
+  form.method='POST';
+  form.action='https://formsubmit.co/sandra_lif@hotmail.com';
+  const fields={'Svar':'Ja ❤️','Datum':dateText,'Vad vill du göra?':selected.value,'_subject':'❤️ Du har fått svar på dejtförfrågan!','_captcha':'false','_template':'table'};
+  Object.entries(fields).forEach(([name,value])=>{const input=document.createElement('input');input.type='hidden';input.name=name;input.value=value;form.appendChild(input);});
+  document.body.appendChild(form);
+  form.submit();
+}
+const noBtn=document.getElementById('noBtn');
+function moveNo(){
+  const x=Math.random()*180-90, y=Math.random()*100-50;
+  noBtn.style.transform=`translate(${x}px,${y}px)`;
+  document.getElementById('noMessage').textContent='Nää, det alternativet verkar inte fungera 😇';
+}
+noBtn.addEventListener('mouseenter',moveNo);
+noBtn.addEventListener('touchstart',(e)=>{e.preventDefault();moveNo();});
+noBtn.addEventListener('click',moveNo);
+buildCalendar();
+</script>
+</body>
+</html>
